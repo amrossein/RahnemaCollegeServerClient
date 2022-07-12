@@ -30,8 +30,6 @@ def process_in(s):
     while command is not None:
         if command == "start_game":
             s.send(command.encode())
-        else:
-            pass
         command = input()
 
 
@@ -41,7 +39,6 @@ def check_message(s, process_in_t: threading.Thread):
         print(server_msg)
         letter = server_msg.split(" ")[4]
         start_game(s ,letter)
-    pass
 
 
 def run_app():

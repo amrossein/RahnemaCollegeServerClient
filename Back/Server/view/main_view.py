@@ -1,3 +1,5 @@
+from asyncio.streams import _ClientConnectedCallback
+from pydoc import cli
 import random
 import socket
 import threading
@@ -7,7 +9,24 @@ names = {}
 families = {}
 cities = {}
 foods = {}
+clients_to_score = {}
 
+fields = [names, families, cities, foods]
+
+
+def end_game():
+    for field in fields:
+        for key in field.keys():
+            if (len(field[key]) == 1):
+                score = clients_to_score[field[key][1]]
+                score += 10
+                clients_to_score[field[key][1]] = score
+            else:
+                for socket in field[key]:
+                    score = clients_to_score[socket]
+                    score += 5
+                    clients_to_score[socket] = score
+    
 
 def start_game():
     letter = random.randint(65, 90)
@@ -22,21 +41,33 @@ def handle_client(client_socket, msg: str):
         start_game()
     elif msg.startswith("name = "):
         name = msg.split(" ")[2]
-        names[client_socket] = name
+        if name not in names:
+            names[name] = [client_socket]
+        else:
+            names[names].append(client_socket)
     elif msg.startswith("family = "):
         family = msg.split(" ")[2]
-        families[client_socket] = family
+        if family not in families:
+            families[family] = [client_socket]
+        else:
+            families[family].append(client_socket)
     elif msg.startswith("city = "):
         city = msg.split(" ")[2]
-        cities[client_socket] = city
+        if city not in cities:
+            cities[city] = [client_socket]
+        else:
+            cities[city].append(client_socket)
     elif msg.startswith("food = "):
         food = msg.split(" ")[2]
-        foods[client_socket] = food
-
+        if food not in foods:
+            foods[food] = [client_socket]
+        else:
+            foods[food].append(client_socket)
 
 
 def on_new_client(client_socket,addr):
     total_clients.append((client_socket, addr))
+    clients_to_score[client_socket] = 0
     while True:
         msg = client_socket.recv(1024)
         msg = msg.decode()
