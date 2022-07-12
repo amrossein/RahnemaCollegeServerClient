@@ -1,4 +1,7 @@
 import socket
+import threading
+
+from click import command
 
 def start_game(s, letter):
     name = input("Name: ")
@@ -13,27 +16,40 @@ def start_game(s, letter):
 
 def create_connection():
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    port = 50000    
+    port = 1233 
     s.connect(('127.0.0.1', port))
     return s, port
 
 def print_help():
     print("Welcome!")
-    print("Input start_game to Start the Game!")
+    print("Input \"start_game\" to Start the Game:")
+
+
+def process_in(s):
+    command = input()
+    while command is not None:
+        if command == "start_game":
+            s.send(command.encode())
+        else:
+            pass
+        command = input()
+
+
+def check_message(s, process_in_t: threading.Thread):
+    server_msg = s.recv(1024).decode()
+    if server_msg.startswith("Start Game With letter"):
+        print(server_msg)
+        letter = server_msg.split(" ")[4]
+        start_game(s ,letter)
+    pass
+
 
 def run_app():
     s, port = create_connection()
     print_help()
-    server_msg = s.recv(1024)
-    server_msg = server_msg.decode()
-    command = input()
-    while command is not None or server_msg is not None:
-        if server_msg.startswith("Start Game With letter"):
-            print(server_msg)
-            letter = server_msg.split(" ")[4]
-            start_game(s ,letter)
-        if command == "start_game":
-            s.send(command.encode())
-        command = input()
+    process_in_t = threading.Thread(target=process_in, args=(s))
+    process_in_t.start()
+    check_message_t = threading.Thread(target=check_message, args=(s, process_in_t))
+    check_message_t.start()
     
 
