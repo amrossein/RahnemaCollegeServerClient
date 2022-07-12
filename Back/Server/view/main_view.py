@@ -40,6 +40,7 @@ def run_app():
 
     while True:
         c, addr = s.accept()     # Establish connection with client.
+        print("New Connection established")
         t1 = threading.Thread(target=on_new_client, args=(c, addr))
         t1.start()
     
